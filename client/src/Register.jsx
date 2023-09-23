@@ -5,6 +5,9 @@ import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 const Register = () => {
   const [isHovered, setIsHovered] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  console.log(password, username);
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -28,8 +31,9 @@ const Register = () => {
             Username
           </label>
           <input
+            value={username}
+            onChange={(ev) => setUsername(ev.target.value)}
             type="text"
-            id="username"
             placeholder="Enter your username"
             className="w-full px-4 py-2 border rounded-lg focus:ring focus:ring-purple-400 focus:outline-none"
           />
@@ -43,8 +47,9 @@ const Register = () => {
           </label>
           <div className="relative">
             <input
+              value={password}
+              onChange={(ev) => setPassword(ev.target.value)}
               type={showPassword ? "text" : "password"}
-              id="password"
               placeholder="Enter your password"
               className="w-full px-4 py-2 border rounded-lg focus:ring focus:ring-purple-400 focus:outline-none pr-10"
             />
