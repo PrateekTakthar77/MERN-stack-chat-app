@@ -1,16 +1,51 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
+import axios from "axios";
+import { UserContext } from "./Usercontext";
 
 const Register = () => {
   const [isHovered, setIsHovered] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  console.log(password, username);
+  const [isRegisterMode, setIsRegisterMode] = useState(true); // Track register/login mode
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const { setUsername: setLoggedInUsername, setId } = useContext(UserContext);
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
+  };
+
+  async function register(ev) {
+    ev.preventDefault();
+
+    if (isRegisterMode) {
+      // Registration logic
+      if (!username || !password) {
+        setErrorMessage("Username and password are required.");
+        return;
+      }
+
+      try {
+        const { data } = await axios.post("/register", { username, password });
+        setLoggedInUsername(username);
+        setId(data.id);
+        console.log("API Response:", data);
+      } catch (error) {
+        console.error("API Error:", error);
+        setErrorMessage("An error occurred during registration.");
+      }
+    } else {
+      // Login logic
+      // Add your login logic here
+    }
+  }
+
+  const toggleMode = () => {
+    // Toggle between register and login mode
+    setIsRegisterMode(!isRegisterMode);
   };
 
   return (
@@ -19,10 +54,18 @@ const Register = () => {
         isHovered ? "animate-fade-in" : ""
       }`}
     >
-      <form className="w-96 p-6 bg-white rounded-lg shadow-lg">
+      <form
+        className="w-96 p-6 bg-white rounded-lg shadow-lg"
+        onSubmit={register}
+      >
         <h2 className="text-3xl font-extrabold mb-6 text-purple-600">
-          Sign Up
+          {isRegisterMode ? "Sign Up" : "Log In"}
         </h2>
+
+        {errorMessage && (
+          <div className="text-red-500 mb-4">{errorMessage}</div>
+        )}
+
         <div className="mb-4">
           <label
             htmlFor="username"
@@ -74,8 +117,17 @@ const Register = () => {
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >
-          Create Account
+          {isRegisterMode ? "Create Account" : "Log In"}
         </button>
+
+        <p
+          className="mt-4 text-gray-600 text-center cursor-pointer"
+          onClick={toggleMode}
+        >
+          {isRegisterMode
+            ? "Already have an account? Log in"
+            : "Don't have an account? Sign up"}
+        </p>
       </form>
     </div>
   );
