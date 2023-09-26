@@ -4,6 +4,9 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const jwt = require('jsonwebtoken'); // Import jwt library
 const User = require('./models/User');
+const cookieparser = require('cookie-parser')
+const bycrypt = require('bcryptjs')
+const bycryptSalt = bycrypt.genSaltSync(10);
 
 // Load environment variables
 require('dotenv').config();
@@ -20,7 +23,7 @@ const corsOptions = {
 
 // Use 'cors' middleware with options
 app.use(cors(corsOptions));
-
+app.use(cookieparser());
 app.use(express.json()); // Middleware for parsing JSON request bodies
 
 app.get('/', (req, res) => {
@@ -30,13 +33,43 @@ app.get('/', (req, res) => {
     });
 });
 
+app.get('/profile', (req, res) => {
+    const token = req.cookies?.token;
+    if (token) {
+        jwt.verify(token, JWT_SECRET, {}, (err, userData) => {
+            if (err) throw err;
+            res.json(userData);
+        });
+    } else {
+        res.status(401).json('no token');
+    }
+})
+
+app.post('/login', async (req, res) => {
+    const { username, password } = req.body;
+    const foundUser = await User.findOne({ username });
+    if (foundUser) {
+        const passOK = bycrypt.compareSync(password, foundUser.password)
+        if (passOK) {
+            jwt.sign({ userId: foundUser._id, username }, JWT_SECRET, (err, token) => {
+                if (err) throw err;
+                res.cookie('token', token, { sameSite: 'none', secure: true }).status(201).json({ id: foundUser._id });
+            });
+        }
+    }
+})
+
 app.post('/register', async (req, res) => {
     const { username, password } = req.body;
     try {
-        const createdUser = await User.create({ username, password });
-        jwt.sign({ userId: createdUser._id }, JWT_SECRET, (err, token) => {
+        const hasedPassword = bycrypt.hashSync(password, bycryptSalt)
+        const createdUser = await User.create({
+            username: username,
+            password: hasedPassword
+        });
+        jwt.sign({ userId: createdUser._id, username }, JWT_SECRET, (err, token) => {
             if (err) throw err;
-            res.cookie('token', token).status(201).json({ id: createdUser._id });
+            res.cookie('token', token, { sameSite: 'none', secure: true }).status(201).json({ id: createdUser._id });
         });
     } catch (error) {
         res.status(500).json(`error`, error);
