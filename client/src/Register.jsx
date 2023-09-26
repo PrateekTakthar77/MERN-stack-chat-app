@@ -38,8 +38,15 @@ const Register = () => {
         setErrorMessage("An error occurred during registration.");
       }
     } else {
-      // Login logic
-      // Add your login logic here
+      try {
+        const { data } = await axios.post("/login", { username, password });
+        setLoggedInUsername(username);
+        setId(data.id);
+        console.log("API Response:", data);
+      } catch (error) {
+        console.error("API Error:", error);
+        setErrorMessage("An error occurred during registration.");
+      }
     }
   }
 
